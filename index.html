@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>H2O Care - Giải pháp uống nước</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            /* Màu nền ngoài cùng (sẽ thay đổi bằng JS) */
+            background-color: #b2ebf2; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.5s;
+        }
+
+        .app-container {
+            width: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Phần Tabs (Các nút chọn đối tượng) */
+        .tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .tab {
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.4);
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .tab.active {
+            background: white;
+            color: #0288d1;
+        }
+
+        /* Phần Thẻ chính */
+        .main-card {
+            background: linear-gradient(180deg, #4ab3e3, #1c88c7);
+            border-radius: 20px;
+            padding: 30px 20px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transition: background 0.5s;
+        }
+
+        .greeting {
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+
+        .mascot {
+            font-size: 50px;
+            margin-bottom: 15px;
+            animation: bounce 2s infinite ease-in-out;
+        }
+
+        .level {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .progress-bar-bg {
+            background: rgba(0, 0, 0, 0.2);
+            height: 8px;
+            border-radius: 5px;
+            margin: 10px 0 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            background: #ffeb3b;
+            height: 100%;
+            width: 0%; /* Sẽ tăng khi uống nước */
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+
+        .stats-card {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stats-card h3 {
+            font-size: 20px;
+            color: #d32f2f;
+        }
+
+        .stats-card p {
+            font-size: 12px;
+            color: #666;}
+
+        .drink-btn {
+            background: #ffca28;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: 0.2s;
+        }
+
+        .drink-btn:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="tabs">
+            <button class="tab active" onclick="switchProfile('kids', this)">Trẻ em</button>
+            <button class="tab" onclick="switchProfile('teens', this)">Thanh thiếu niên</button>
+            <button class="tab" onclick="switchProfile('office', this)">Văn phòng</button>
+            <button class="tab" onclick="switchProfile('elderly', this)">Cao tuổi</button>
+        </div>
+
+        <div class="main-card" id="mainCard">
+            <h2 class="greeting" id="greetingText">Giờ uống nước thôi, Rùa ạ!</h2>
+            <div class="mascot" id="mascotIcon">🐢 🏝️</div>
+            
+            <div class="level">Cấp độ 2 / 5</div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressFill"></div>
+            </div>
+
+            <div class="stats-card">
+                <h3 id="cupStats">🥤 <span id="currentCups">0</span> / <span id="targetCups">6</span></h3>
+                <p>Cốc hôm nay</p>
+            </div>
+
+            <button class="drink-btn" onclick="drinkWater()">💧 ĐÃ UỐNG!</button>
+        </div>
+    </div>
+
+    <script>
+        // Dữ liệu cho từng nhóm tuổi
+        const profiles = {
+            kids: {
+                bgBody: '#b2ebf2', // Nền xanh nhạt
+                bgCard: 'linear-gradient(180deg, #4ab3e3, #1c88c7)', // Thẻ xanh dương
+                greeting: 'Giờ uống nước thôi, Rùa ạ!',
+                mascot: '🐢 🏝️',
+                target: 6
+            },
+            teens: {
+                bgBody: '#f3e5f5', // Nền tím nhạt
+                bgCard: 'linear-gradient(180deg, #ab47bc, #7b1fa2)', // Thẻ tím
+                greeting: 'Nạp nước để bứt phá nào!',
+                mascot: '🐯 🔥',
+                target: 8
+            },
+            office: {
+                bgBody: '#e0f2f1', // Nền xanh ngọc
+                bgCard: 'linear-gradient(180deg, #26a69a, #00695c)', // Thẻ xanh lá đậm
+                greeting: 'Nghỉ tay uống nước xíu bạn ơi!',
+                mascot: '☕ 💻',
+                target: 8
+            },
+            elderly: {
+                bgBody: '#fff3e0', // Nền cam nhạt
+                bgCard: 'linear-gradient(180deg, #ffca28, #f57c00)', // Thẻ camgreeting: 'Uống nước cho khỏe mạnh nhé!',
+                mascot: '🍵 🌱',
+                target: 7
+            }
+        };
+
+        // Các biến lưu trạng thái hiện tại
+        let currentProfileData = profiles['kids'];
+        let cupsDrunk = 0;
+
+        // Hàm chuyển đổi đối tượng
+        function switchProfile(profileKey, btnElement) {
+            // 1. Đổi nút Active (Màu trắng)
+            const allTabs = document.querySelectorAll('.tab');
+            allTabs.forEach(tab => tab.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            // 2. Lấy dữ liệu của nhóm được chọn
+            currentProfileData = profiles[profileKey];
+
+            // 3. Cập nhật giao diện
+            document.body.style.backgroundColor = currentProfileData.bgBody;
+            document.getElementById('mainCard').style.background = currentProfileData.bgCard;
+            document.getElementById('greetingText').innerText = currentProfileData.greeting;
+            document.getElementById('mascotIcon').innerText = currentProfileData.mascot;
+            document.getElementById('targetCups').innerText = currentProfileData.target;
+            
+            // 4. Reset số cốc nước về 0 khi chuyển người dùng (nếu muốn)
+            cupsDrunk = 0;
+            updateProgress();
+        }
+
+        // Hàm khi bấm nút "Đã Uống"
+        function drinkWater() {
+            if (cupsDrunk < currentProfileData.target) {
+                cupsDrunk++;
+                updateProgress();
+            } else {
+                alert('Tuyệt vời! Bạn đã hoàn thành mục tiêu uống nước hôm nay! 🎉');
+            }
+        }
+
+        // Hàm cập nhật thanh tiến trình và số cốc
+        function updateProgress() {
+            document.getElementById('currentCups').innerText = cupsDrunk;
+            
+            // Tính toán phần trăm thanh màu vàng
+            let percent = (cupsDrunk / currentProfileData.target) * 100;
+            document.getElementById('progressFill').style.width = percent + '%';
+        }
+    </script>
+</body>
+</html>
